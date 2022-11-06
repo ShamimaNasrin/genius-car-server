@@ -62,10 +62,25 @@ async function run() {
         //delete order
         app.delete('/orders/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             res.send(result);
         });
+
+        //update status
+        app.patch('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const status = req.params.status;
+            const query = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: status
+                }
+            }
+            const result = await orderCollection.updateOne(query, updateDoc);
+            res.send(result);
+        });
+
 
     }
     finally {
