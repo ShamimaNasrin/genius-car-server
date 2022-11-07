@@ -23,6 +23,24 @@ async function run() {
         const serviceCollection = client.db("geniusCar").collection("services");
         const orderCollection = client.db("geniusCar").collection("orders");
 
+        //get token from client thn verify it
+        function jwtVerify(req, res, next) {
+            const authHeader = req.headers.authorization;
+
+            if (!authHeader) {
+                return res.status(401).send({ message: 'unauthorized' })
+            }
+            const token = authHeader.split(' ')[1];
+
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+                if (err) {
+                    return res.status(403).send({ message: 'Forbidden access' })
+                }
+                req.decoded = decoded;
+                next();
+            })
+        }
+
         //READ services data from MnngoDB & create services api
         app.get('/services', async (req, res) => {
             const query = {};
@@ -47,8 +65,8 @@ async function run() {
 
         //orders api using query parameter (email)
         app.get('/orders', async (req, res) => {
+            // console.log(req.headers.authorization);//check token
             let query = {};
-
             if (req.query.email) {
                 query = {
                     email: req.query.email
@@ -86,8 +104,8 @@ async function run() {
         app.post('/jwt', (req, res) => {
             const user = req.body;
             // console.log(user);
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d'})
-            res.send({token});
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' })
+            res.send({ token });
         });
 
 
