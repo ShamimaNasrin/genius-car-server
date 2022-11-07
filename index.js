@@ -67,7 +67,8 @@ async function run() {
 
         //orders api using query parameter (email)
         app.get('/orders', jwtVerify, async (req, res) => {
-            
+
+            const decoded = req.decoded;
             if (decoded.email !== req.query.email) {
                 res.status(403).send({ message: 'Forbidden access' });
             }
@@ -78,7 +79,6 @@ async function run() {
                     email: req.query.email
                 }
             }
-
             const cursor = orderCollection.find(query);
             const orders = await cursor.toArray();
             res.send(orders);
