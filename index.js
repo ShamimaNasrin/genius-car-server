@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config()
@@ -79,6 +80,12 @@ async function run() {
             }
             const result = await orderCollection.updateOne(query, updateDoc);
             res.send(result);
+        });
+
+        //Token
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            console.log(user);
         });
 
 
