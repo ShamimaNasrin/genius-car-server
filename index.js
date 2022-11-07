@@ -18,28 +18,30 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 // console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+//get token from client thn verify it
+function jwtVerify(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    //check token exist or not
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized' })
+    }
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        //check is that token right/valid or not 
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 async function run() {
     try {
         const serviceCollection = client.db("geniusCar").collection("services");
         const orderCollection = client.db("geniusCar").collection("orders");
-
-        //get token from client thn verify it
-        function jwtVerify(req, res, next) {
-            const authHeader = req.headers.authorization;
-
-            if (!authHeader) {
-                return res.status(401).send({ message: 'unauthorized' })
-            }
-            const token = authHeader.split(' ')[1];
-
-            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-                if (err) {
-                    return res.status(403).send({ message: 'Forbidden access' })
-                }
-                req.decoded = decoded;
-                next();
-            })
-        }
 
         //READ services data from MnngoDB & create services api
         app.get('/services', async (req, res) => {
@@ -57,15 +59,19 @@ async function run() {
         })
 
         //send data to mongo and create orders api
-        app.post('/orders', async (req, res) => {
+        app.post('/orders', jwtVerify, async (req, res) => {
             const order = req.body;
             const result = await orderCollection.insertOne(order);
             res.send(result);
         });
 
         //orders api using query parameter (email)
-        app.get('/orders', async (req, res) => {
-            // console.log(req.headers.authorization);//check token
+        app.get('/orders', jwtVerify, async (req, res) => {
+            
+            if (decoded.email !== req.query.email) {
+                res.status(403).send({ message: 'Forbidden access' });
+            }
+
             let query = {};
             if (req.query.email) {
                 query = {
@@ -79,7 +85,7 @@ async function run() {
         });
 
         //delete order
-        app.delete('/orders/:id', async (req, res) => {
+        app.delete('/orders/:id', jwtVerify, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
@@ -87,7 +93,7 @@ async function run() {
         });
 
         //update status
-        app.patch('/orders/:id', async (req, res) => {
+        app.patch('/orders/:id', jwtVerify, async (req, res) => {
             const id = req.params.id;
             const status = req.params.status;
             const query = { _id: ObjectId(id) };
