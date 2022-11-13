@@ -45,6 +45,13 @@ async function run() {
 
         //READ services data from MnngoDB & create services api
         app.get('/services', async (req, res) => {
+            // const query = { price: { $gt: 100, $lt: 300 } }
+            // const query = { price: { $eq: 200 } }
+            // const query = { price: { $lte: 200 } }
+            // const query = { price: { $ne: 150 } }
+            // const query = { price: { $in: [20, 40, 150] } }
+            // const query = { price: { $nin: [20, 40, 150] } }
+            //const query = { $and: [{price: {$gt: 20}}, {price: {$gt: 100}}] }; //product: price range: (20-100)
             const query = {};
             const order = req.query.order === 'asc' ? 1 : -1;//1 = ascending; -1 = descending
             const cursor = serviceCollection.find(query).sort({ price: order });
